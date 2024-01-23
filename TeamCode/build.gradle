@@ -6,9 +6,7 @@
 // integrate updates to the FTC into your code. If you really need to customize
 // the build definitions, you can place those customizations in this file, but
 // please think carefully as to whether such customizations are really necessary
-// before doing so.
-
-
+// before doing so
 // Custom definitions may go here
 
 // Include common definitions from above.
@@ -26,4 +24,8 @@ android {
 dependencies {
     implementation project(':FtcRobotController')
     annotationProcessor files('lib/OpModeAnnotationProcessor.jar')
+
+    implementation 'org.apache.commons:commons-math3:3.6.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.7'
+    implementation 'com.acmerobotics.roadrunner:core:0.5.6'
 }

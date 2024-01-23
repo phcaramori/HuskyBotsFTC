@@ -5,11 +5,12 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
-@TeleOp(name="Mecanum Movement Testing w/ motor") //name of program in driver hub
+@TeleOp(name="Mecanum Movement Testing with Motor") //name of program in driver hub
 public class MecanumTestAndActivateMotor extends LinearOpMode {
-    DcMotor Motor_FrontLeft, Motor_FrontRight, Motor_BackLeft, Motor_BackRight, Motor_Test;
+    DcMotor Motor_FrontLeft, Motor_FrontRight, Motor_BackLeft, Motor_BackRight, Intake_Motor;
     @Override
     public void runOpMode() {
+
         double IMPERFECT_STRAFING_MODIFIER = 1.1;
         Gamepad currentGamepad = new Gamepad();
         Gamepad previousGamepad = new Gamepad();
@@ -18,8 +19,7 @@ public class MecanumTestAndActivateMotor extends LinearOpMode {
         Motor_FrontRight = hardwareMap.get(DcMotor.class,"FrontRight");
         Motor_BackLeft = hardwareMap.get(DcMotor.class,"BackLeft");
         Motor_BackRight = hardwareMap.get(DcMotor.class,"BackRight");
-        Motor_Test = hardwareMap.get(DcMotor.class,"test");
-
+        Intake_Motor = hardwareMap.get(DcMotor.class,"test");
         Motor_FrontLeft.setDirection(DcMotor.Direction.REVERSE);
         Motor_BackLeft.setDirection(DcMotor.Direction.REVERSE);
         Motor_FrontRight.setDirection(DcMotor.Direction.FORWARD);
@@ -55,14 +55,15 @@ public class MecanumTestAndActivateMotor extends LinearOpMode {
             Motor_BackLeft.setPower(backLeftPower);
             Motor_BackRight.setPower(backRightPower);
             if(gamepad1.square){
-                Motor_Test.setPower(1);
+                Intake_Motor.setPower(1);
             }else{
-                Motor_Test.setPower(0);
+                Intake_Motor.setPower(0);
+                Intake_Motor.setPower(0);
             }
             if(gamepad1.circle){
-                Motor_Test.setPower(-1);
+                Intake_Motor.setPower(-1);
             }else{
-                Motor_Test.setPower(0);
+                Intake_Motor.setPower(0);
             }
         }
     }
