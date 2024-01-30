@@ -16,9 +16,10 @@ public class ArmMotorTest extends OpMode {
 
     @Override
     public void loop() {
+        motorArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         armPower = 0;
-        if(gamepad1.dpad_up) armPower = 0.5;
-        else if(gamepad1.dpad_down) armPower = -0.5;
+        if(gamepad1.dpad_up) armPower = 0.3;
+        else if(gamepad1.dpad_down) armPower = -0.3;
         motorArm.setPower(armPower);
     }
 }

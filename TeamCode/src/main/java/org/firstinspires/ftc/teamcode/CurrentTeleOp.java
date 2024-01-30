@@ -6,10 +6,14 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
+import java.util.Arrays;
+
 @TeleOp(name="Current TeleOp Program")
 public class CurrentTeleOp extends LinearOpMode {
     DcMotor motorFrontLeft, motorFrontRight, motorBackLeft, motorBackRight, motorIntake,
             motorArm;
+
+    double frontLeftPower = 0, backLeftPower = 0, frontRightPower = 0, backRightPower = 0;
     @Override
     public void runOpMode() throws InterruptedException {
 
@@ -49,11 +53,8 @@ public class CurrentTeleOp extends LinearOpMode {
             double x = currentGamepad.left_stick_x * IMPERFECT_STRAFING_MODIFIER; //counteract imperfect strafing
             double rx = currentGamepad.right_stick_x;
 
-            double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
-            double frontLeftPower = (y + x + rx) / denominator;
-            double backLeftPower = (y - x + rx) / denominator;
-            double frontRightPower = (y - x - rx) / denominator;
-            double backRightPower = (y + x - rx) / denominator;
+            mecanumTeleopPowerCalculation(x, y, rx);
+
 
             motorFrontLeft.setPower(frontLeftPower);
             motorFrontRight.setPower(frontRightPower);
@@ -76,5 +77,24 @@ public class CurrentTeleOp extends LinearOpMode {
             motorArm.setPower(armPower);
 
         }
+    }
+    public void mecanumTeleopPowerCalculation(double x, double y, double rotation){
+        frontLeftPower = (y + x + rotation);
+        backLeftPower = (y - x + rotation);
+        frontRightPower = (y - x - rotation);
+        backRightPower = (y + x - rotation);
+
+        double motorPowers[] = {Math.abs(frontLeftPower), Math.abs(backLeftPower),
+                Math.abs(frontRightPower), Math.abs(backRightPower)};
+
+        Arrays.sort(motorPowers);
+        if (motorPowers[3] != 0) {
+            frontLeftPower = frontLeftPower / motorPowers[3];
+            backLeftPower = backLeftPower / motorPowers[3];
+            frontRightPower = frontRightPower / motorPowers[3];
+            backRightPower = backRightPower / motorPowers[3];
+        }
+
+
     }
 }
