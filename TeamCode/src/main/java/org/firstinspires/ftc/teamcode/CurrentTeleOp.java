@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import android.util.Log;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -14,6 +16,8 @@ public class CurrentTeleOp extends LinearOpMode {
             motorArm;
 
     double frontLeftPower = 0, backLeftPower = 0, frontRightPower = 0, backRightPower = 0;
+    double a,b,c,d;
+    double velocity_factor;
     @Override
     public void runOpMode() throws InterruptedException {
 
@@ -40,6 +44,8 @@ public class CurrentTeleOp extends LinearOpMode {
         motorFrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorBackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+        motorArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         waitForStart(); /* Tells robot to do nothing until start is hit */
         if (isStopRequested()) {
             return;
@@ -60,6 +66,9 @@ public class CurrentTeleOp extends LinearOpMode {
             motorFrontRight.setPower(frontRightPower);
             motorBackLeft.setPower(backLeftPower);
             motorBackRight.setPower(backRightPower);
+
+            Log.d("CurrentTeleOp", String.valueOf(a));
+
             if (gamepad1.square) {
                 motorIntake.setPower(1);
             } else {
@@ -87,12 +96,14 @@ public class CurrentTeleOp extends LinearOpMode {
         double motorPowers[] = {Math.abs(frontLeftPower), Math.abs(backLeftPower),
                 Math.abs(frontRightPower), Math.abs(backRightPower)};
 
+        
         Arrays.sort(motorPowers);
-        if (motorPowers[3] != 0) {
-            frontLeftPower = frontLeftPower / motorPowers[3];
-            backLeftPower = backLeftPower / motorPowers[3];
-            frontRightPower = frontRightPower / motorPowers[3];
-            backRightPower = backRightPower / motorPowers[3];
+        if (motorPowers[3] > 0 && rotation == 0) {
+            velocity_factor = Math.max(Math.hypot(x, y), Math.abs(rotation));
+            frontLeftPower = velocity_factor * frontLeftPower / motorPowers[3];
+            backLeftPower = velocity_factor * backLeftPower / motorPowers[3];
+            frontRightPower = velocity_factor * frontRightPower / motorPowers[3];
+            backRightPower = velocity_factor * backRightPower / motorPowers[3];
         }
 
 
