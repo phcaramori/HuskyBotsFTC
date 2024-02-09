@@ -7,16 +7,42 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import java.util.Arrays;
 
 @TeleOp(name="Current TeleOp Program")
 public class CurrentTeleOp extends LinearOpMode {
+    public void mecanumTeleopPowerCalculation(double x, double y, double rotation){
+        frontLeftPower = (y + x + rotation);
+        backLeftPower = (y - x + rotation);
+        frontRightPower = (y - x - rotation);
+        backRightPower = (y + x - rotation);
+
+        double motorPowers[] = {Math.abs(frontLeftPower), Math.abs(backLeftPower),
+                Math.abs(frontRightPower), Math.abs(backRightPower)};
+
+
+        Arrays.sort(motorPowers);
+        if (motorPowers[3] > 0) {
+            velocity_factor = Math.max(Math.hypot(x, y), Math.abs(rotation));
+            if (velocity_factor > 0.8) velocity_factor = 1;
+            frontLeftPower = velocity_factor * frontLeftPower / motorPowers[3];
+            backLeftPower = velocity_factor * backLeftPower / motorPowers[3];
+            frontRightPower = velocity_factor * frontRightPower / motorPowers[3];
+            backRightPower = velocity_factor * backRightPower / motorPowers[3];
+        }
+
+
+    }
     DcMotor motorFrontLeft, motorFrontRight, motorBackLeft, motorBackRight, motorIntake,
             motorArm;
 
+    Servo servoAirplaneTrigger;
+
     double frontLeftPower = 0, backLeftPower = 0, frontRightPower = 0, backRightPower = 0;
     double a,b,c,d;
+    boolean intake_on = false;
     double velocity_factor;
     @Override
     public void runOpMode() throws InterruptedException {
@@ -38,6 +64,9 @@ public class CurrentTeleOp extends LinearOpMode {
         motorBackRight.setDirection(DcMotor.Direction.REVERSE);
         motorArm.setDirection(DcMotor.Direction.REVERSE);
 
+        servoAirplaneTrigger = hardwareMap.get(Servo.class, "AirplaneTriggerServo");
+        servoAirplaneTrigger.setDirection(Servo.Direction.REVERSE);
+        servoAirplaneTrigger.getController().pwmEnable();
 
         motorFrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorBackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -55,8 +84,8 @@ public class CurrentTeleOp extends LinearOpMode {
             previousGamepad.copy(currentGamepad);
             currentGamepad.copy(gamepad1);
 
-            double y = -(currentGamepad.left_stick_y); //y stick is always reversed
-            double x = currentGamepad.left_stick_x * IMPERFECT_STRAFING_MODIFIER; //counteract imperfect strafing
+            double y = -(currentGamepad.left_stick_y) * (1/IMPERFECT_STRAFING_MODIFIER); //y stick is always reversed
+            double x = currentGamepad.left_stick_x; //counteract imperfect strafing
             double rx = currentGamepad.right_stick_x;
 
             mecanumTeleopPowerCalculation(x, y, rx);
@@ -69,43 +98,30 @@ public class CurrentTeleOp extends LinearOpMode {
 
             Log.d("CurrentTeleOp", String.valueOf(a));
 
-            if (gamepad1.square) {
-                motorIntake.setPower(1);
-            } else {
-                motorIntake.setPower(0);
-                motorIntake.setPower(0);
-            }
-            if (gamepad1.circle) {
+            if (intake_on) {
                 motorIntake.setPower(-1);
             } else {
                 motorIntake.setPower(0);
             }
+
+            if (gamepad1.square) {
+                intake_on = false;
+            }
+            if (gamepad1.circle) {
+                intake_on = true;
+            }
+
+            if (gamepad1.right_bumper){
+                servoAirplaneTrigger.setPosition(1);
+            } else{
+                servoAirplaneTrigger.setPosition(0);
+            }
+
             armPower = 0;
             if (gamepad1.dpad_up) armPower = 0.5;
             else if (gamepad1.dpad_down) armPower = -0.5;
             motorArm.setPower(armPower);
 
         }
-    }
-    public void mecanumTeleopPowerCalculation(double x, double y, double rotation){
-        frontLeftPower = (y + x + rotation);
-        backLeftPower = (y - x + rotation);
-        frontRightPower = (y - x - rotation);
-        backRightPower = (y + x - rotation);
-
-        double motorPowers[] = {Math.abs(frontLeftPower), Math.abs(backLeftPower),
-                Math.abs(frontRightPower), Math.abs(backRightPower)};
-
-        
-        Arrays.sort(motorPowers);
-        if (motorPowers[3] > 0 && rotation == 0) {
-            velocity_factor = Math.max(Math.hypot(x, y), Math.abs(rotation));
-            frontLeftPower = velocity_factor * frontLeftPower / motorPowers[3];
-            backLeftPower = velocity_factor * backLeftPower / motorPowers[3];
-            frontRightPower = velocity_factor * frontRightPower / motorPowers[3];
-            backRightPower = velocity_factor * backRightPower / motorPowers[3];
-        }
-
-
     }
 }
