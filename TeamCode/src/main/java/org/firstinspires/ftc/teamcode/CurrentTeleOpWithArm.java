@@ -35,6 +35,15 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
 
 
     }
+    public int degreesToTicks(float degrees){
+        int ticks = (int) Math.round(degrees*12.444);
+        return ticks;
+    }
+    public double ticksToDegrees(int ticks){
+        double degrees = (double) ticks/12.444;
+        return degrees;
+    }
+
     DcMotor motorFrontLeft, motorFrontRight, motorBackLeft, motorBackRight, motorIntake, motorArm;
     Servo servoAirplaneTrigger, servoGripper, servoWrist;
     double frontLeftPower = 0, backLeftPower = 0, frontRightPower = 0, backRightPower = 0;
@@ -89,7 +98,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
         motorArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motorArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorArm.setPower(0.0);
-        motorArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER); // only set to run to pos later on
+        motorArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER); // only set to run to pos later on
 
         telemetry.addData("Status", "Initialized");
 
@@ -116,7 +125,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                 if (intake_on) {
                     intake_on = false;
                     motorIntake.setPower(-1);
-                }else{
+                } else{
                     intake_on = true;
                     motorIntake.setPower(0);
                 }
@@ -126,7 +135,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
             manualArmPower = gamepad1.right_trigger - gamepad1.left_trigger;
             if(manualArmPower != 0.0){
                 armManualMode = true;
-                motorArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                motorArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 motorArm.setPower(manualArmPower);
             }
             if(!armManualMode){
