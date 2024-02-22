@@ -38,7 +38,7 @@ public class CurrentTeleOp extends LinearOpMode {
     DcMotor motorFrontLeft, motorFrontRight, motorBackLeft, motorBackRight, motorIntake,
             motorArm;
 
-    Servo servoAirplaneTrigger;
+    Servo servoAirplaneTrigger, servoAttackAngle, servoFinger, servoPurpleDepositor;
 
     double frontLeftPower = 0, backLeftPower = 0, frontRightPower = 0, backRightPower = 0;
     double a,b,c,d;
@@ -52,6 +52,7 @@ public class CurrentTeleOp extends LinearOpMode {
         Gamepad currentGamepad = new Gamepad();
         Gamepad previousGamepad = new Gamepad();
 
+        // Motor Hardware Maps
         motorFrontLeft = hardwareMap.get(DcMotor.class, "FrontLeft");
         motorFrontRight = hardwareMap.get(DcMotor.class, "FrontRight");
         motorBackLeft = hardwareMap.get(DcMotor.class, "BackLeft");
@@ -64,9 +65,18 @@ public class CurrentTeleOp extends LinearOpMode {
         motorBackRight.setDirection(DcMotor.Direction.REVERSE);
         motorArm.setDirection(DcMotor.Direction.REVERSE);
 
+        //Servo Hardware Maps
         servoAirplaneTrigger = hardwareMap.get(Servo.class, "AirplaneTriggerServo");
+        servoFinger = hardwareMap.get(Servo.class, "FingerServo");
+        servoAttackAngle = hardwareMap.get(Servo.class, "AttackAngleServo");
+        servoPurpleDepositor = hardwareMap.get(Servo.class, "PurpleDepositorServo");
         servoAirplaneTrigger.setDirection(Servo.Direction.REVERSE);
         servoAirplaneTrigger.getController().pwmEnable();
+        servoFinger.getController().pwmEnable();
+        servoAttackAngle.getController().pwmEnable();
+        servoPurpleDepositor.getController().pwmEnable();
+
+
 
         motorFrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorBackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -74,6 +84,7 @@ public class CurrentTeleOp extends LinearOpMode {
         motorBackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         motorArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         waitForStart(); /* Tells robot to do nothing until start is hit */
         if (isStopRequested()) {
@@ -124,4 +135,14 @@ public class CurrentTeleOp extends LinearOpMode {
 
         }
     }
+
+    int encoder_ticks_to_angle(int encoder_ticks){
+        // Our 180 degree angle is equivalent to XX rotations
+        return 0;
+    }
+
+    int angle_to_encoder_ticks(float angle){
+        return 0;
+    }
+
 }
