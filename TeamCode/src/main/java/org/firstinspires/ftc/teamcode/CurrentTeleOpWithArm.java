@@ -1,11 +1,8 @@
 package org.firstinspires.ftc.teamcode;
 
-import android.util.Log;
-
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -57,6 +54,10 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
     final int armHomePos = 0, armPickupPos = 0, armScorePos = 0; //0 to idk
     double manualArmPower = 0.0;
     boolean armManualMode = false;
+
+    boolean moving_pixel = false, pixel_grab = false, arm_in_place=false;
+
+    float wrist_servo_target = 0;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -143,17 +144,31 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                 if(gamepad1.triangle){ //score
                     motorArm.setTargetPosition(armScorePos);
                     motorArm.setPower(1.0);
-                }else if(gamepad1.x){ //pick-up
-                    motorArm.setTargetPosition(armPickupPos);
-                    motorArm.setPower(1.0);
                 }else if(gamepad1.square){ //home pos
-                    motorArm.setTargetPosition(armHomePos);
-                    motorArm.setPower(1.0);
+                    motorArm.setTargetPosition(0);
+                    motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    motorArm.setPower(Math.min(Math.abs(motorArm.getCurrentPosition())/1000, 1));
                 }
             }
 
+            if(gamepad1.dpad_down){
+                pixel_grab = true;
+            }
+            if(gamepad1.dpad_up){
+                pixel_grab = false;
+            }
+            if(pixel_grab){
+                servoGripper.setPosition(1);
+            } else{
+                servoWrist.setPosition(0);
+            }
 
-
+            servoWrist.setPosition(wrist_servo_target);
+            if(gamepad1.dpad_left){
+                wrist_servo_target -= 0.01;
+            } else if (gamepad1.dpad_right) {
+                wrist_servo_target += 0.01;
+            }
 
 
             if (gamepad1.right_bumper){
@@ -161,6 +176,12 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
             } else{
                 servoAirplaneTrigger.setPosition(0);
             }
+
+            //Arm Movement Code
+            telemetry.addData("Arm Encoder Value", motorArm.getCurrentPosition());
+            telemetry.addData("Gripper Servo Position", servoGripper.getPosition());
+            telemetry.addData("Wrist Servo Position", servoWrist.getPosition());
+            telemetry.update();
         }
     }
 }
