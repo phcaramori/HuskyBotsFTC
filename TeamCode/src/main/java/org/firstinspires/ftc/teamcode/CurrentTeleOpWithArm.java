@@ -47,7 +47,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
     boolean intake_on = false;
     double velocity_factor;
 
-    //TO-DO
+    //TODO:
     final double
             grabberPickupPos = 0, grabberScorePos = 0, //0 to 1
             wristPickupPos = 0, wristScorePos = 0; //0 to 1
