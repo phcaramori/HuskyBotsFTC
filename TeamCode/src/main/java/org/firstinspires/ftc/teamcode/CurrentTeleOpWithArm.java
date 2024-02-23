@@ -57,7 +57,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
 
     boolean moving_pixel = false, pixel_grab = false, arm_in_place=false;
 
-    float wrist_servo_target = 0;
+    float wristServoTarget = 0;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -122,7 +122,8 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
             motorBackLeft.setPower(backLeftPower);
             motorBackRight.setPower(backRightPower);
 
-            if (gamepad1.circle && !previousGamepad.circle) { //toggle intake
+            //toggle intake
+            if (gamepad1.circle && !previousGamepad.circle) {
                 if (intake_on) {
                     intake_on = false;
                     motorIntake.setPower(-1);
@@ -160,16 +161,15 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
             if(pixel_grab){
                 servoGripper.setPosition(1);
             } else{
-                servoWrist.setPosition(0);
+                servoGripper.setPosition(0);
             }
 
-            servoWrist.setPosition(wrist_servo_target);
             if(gamepad1.dpad_left){
-                wrist_servo_target -= 0.01;
+                wristServoTarget -= 0.01;
             } else if (gamepad1.dpad_right) {
-                wrist_servo_target += 0.01;
+                wristServoTarget += 0.01;
             }
-
+            servoWrist.setPosition(wristServoTarget);
 
             if (gamepad1.right_bumper){
                 servoAirplaneTrigger.setPosition(1);
