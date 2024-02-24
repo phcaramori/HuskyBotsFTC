@@ -2,14 +2,24 @@ package org.firstinspires.ftc.teamcode;
 
 import android.util.Log;
 
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 @TeleOp(name="Current TeleOp Program")
 public class CurrentTeleOp extends LinearOpMode {
@@ -44,6 +54,8 @@ public class CurrentTeleOp extends LinearOpMode {
     double a,b,c,d;
     boolean intake_on = false;
     double velocity_factor;
+
+    IMU imu;
     @Override
     public void runOpMode() throws InterruptedException {
 
@@ -67,14 +79,18 @@ public class CurrentTeleOp extends LinearOpMode {
 
         //Servo Hardware Maps
         servoAirplaneTrigger = hardwareMap.get(Servo.class, "AirplaneTriggerServo");
-        servoFinger = hardwareMap.get(Servo.class, "FingerServo");
-        servoAttackAngle = hardwareMap.get(Servo.class, "AttackAngleServo");
+        servoFinger = hardwareMap.get(Servo.class, "GripperServo");
+        servoAttackAngle = hardwareMap.get(Servo.class, "WristServo");
         servoPurpleDepositor = hardwareMap.get(Servo.class, "PurpleDepositorServo");
         servoAirplaneTrigger.setDirection(Servo.Direction.REVERSE);
         servoAirplaneTrigger.getController().pwmEnable();
         servoFinger.getController().pwmEnable();
         servoAttackAngle.getController().pwmEnable();
         servoPurpleDepositor.getController().pwmEnable();
+        imu = hardwareMap.get(IMU.class, "imu");
+        IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
+                DriveConstants.LOGO_FACING_DIR, DriveConstants.USB_FACING_DIR));
+        imu.initialize(parameters);
 
 
 
@@ -86,12 +102,19 @@ public class CurrentTeleOp extends LinearOpMode {
         motorArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motorArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        FtcDashboard dashboard = FtcDashboard.getInstance();
+        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
+
         waitForStart(); /* Tells robot to do nothing until start is hit */
         if (isStopRequested()) {
             return;
         }
 
         while (opModeIsActive()) {
+
+            telemetry.addData("heading", imu.getRobotYawPitchRollAngles());
+            telemetry.addData("Angular Velocity Raw", imu.getRobotAngularVelocity(AngleUnit.RADIANS));
+            telemetry.update();
             previousGamepad.copy(currentGamepad);
             currentGamepad.copy(gamepad1);
 
