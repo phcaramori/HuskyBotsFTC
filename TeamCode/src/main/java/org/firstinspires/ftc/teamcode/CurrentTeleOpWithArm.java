@@ -47,17 +47,15 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
     boolean intake_on = false;
     double velocity_factor;
 
-    //TO-DO
+    //TODO: Set up pos constants
     final double
-            grabberPickupPos = 0, grabberScorePos = 0, //0 to 1
+            gripperPickupPos = 1, gripperScorePos = 0.4, //0 to 1
             wristPickupPos = 0, wristScorePos = 0; //0 to 1
     final int armHomePos = 0, armPickupPos = 0, armScorePos = 0; //0 to idk
     double manualArmPower = 0.0;
-    boolean armManualMode = false;
+    boolean armManualMode = false, pixel_grab = false;
 
-    boolean moving_pixel = false, pixel_grab = false, arm_in_place=false;
-
-    float wrist_servo_target = 0;
+    float wristServoTarget = 0;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -73,6 +71,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
         motorBackLeft = hardwareMap.get(DcMotor.class, "BackLeft");
         motorBackRight = hardwareMap.get(DcMotor.class, "BackRight");
         motorIntake = hardwareMap.get(DcMotor.class, "IntakeMotor");
+        motorArm = hardwareMap.get(DcMotor.class, "ArmMotor");
         motorFrontLeft.setDirection(DcMotor.Direction.REVERSE);
         motorBackLeft.setDirection(DcMotor.Direction.REVERSE);
         motorFrontRight.setDirection(DcMotor.Direction.FORWARD);
@@ -122,7 +121,8 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
             motorBackLeft.setPower(backLeftPower);
             motorBackRight.setPower(backRightPower);
 
-            if (gamepad1.circle && !previousGamepad.circle) { //toggle intake
+            // === Intake ===
+            if (gamepad1.circle && !previousGamepad.circle) {
                 if (intake_on) {
                     intake_on = false;
                     motorIntake.setPower(-1);
@@ -132,25 +132,35 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                 }
             }
 
-            //arm:
-            manualArmPower = gamepad1.right_trigger - gamepad1.left_trigger;
-            if(manualArmPower != 0.0){
+            // === Arm ===
+            manualArmPower = (gamepad1.right_trigger - gamepad1.left_trigger) / 1.33; //-0.75 - .75
+            if(manualArmPower != 0.00){
                 armManualMode = true;
                 motorArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 motorArm.setPower(manualArmPower);
+            } else {
+                armManualMode = false;
             }
             if(!armManualMode){
-                motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                if(motorArm.getMode() == DcMotor.RunMode.RUN_USING_ENCODER){ //if changing from manual to pos-based, stop arm before running to position.
+                    motorArm.setPower(0);
+                }
                 if(gamepad1.triangle){ //score
+                    if(motorArm.getCurrentPosition()==armPickupPos){
+                        servoGripper.setPosition(gripperScorePos);
+                    }
                     motorArm.setTargetPosition(armScorePos);
+                    motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     motorArm.setPower(1.0);
-                }else if(gamepad1.square){ //home pos
-                    motorArm.setTargetPosition(0);
+                }else if(gamepad1.square){ //pickup pos
+                    servoGripper.setPosition(gripperPickupPos);
+                    motorArm.setTargetPosition(armPickupPos);
                     motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     motorArm.setPower(Math.min(Math.abs(motorArm.getCurrentPosition())/1000, 1));
                 }
             }
 
+            // === Gripper ===
             if(gamepad1.dpad_down){
                 pixel_grab = true;
             }
@@ -158,29 +168,43 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                 pixel_grab = false;
             }
             if(pixel_grab){
-                servoGripper.setPosition(1);
-            } else{
-                servoWrist.setPosition(0);
+                servoGripper.setPosition(gripperPickupPos);
+            }else{
+                servoGripper.setPosition(gripperScorePos);
             }
 
-            servoWrist.setPosition(wrist_servo_target);
+            // === Wrist Control Based on Arm ===
+            //TODO: get these constants correct
+            float proportionalArmPos = motorArm.getCurrentPosition()/armScorePos; //0-100; where 0 is pickup, 1 is score.
+            //wristServoTarget is = 0 for straight down, 1 for straight up; 0.5 for straight forward.
+            if(proportionalArmPos <= 1){
+                wristServoTarget = proportionalArmPos / 2;
+            } else if(proportionalArmPos > 1){
+                wristServoTarget = proportionalArmPos / 2;
+            }
+
+
+            // === Manual Wrist Control ===
             if(gamepad1.dpad_left){
-                wrist_servo_target -= 0.01;
+                wristServoTarget -= 0.01;
             } else if (gamepad1.dpad_right) {
-                wrist_servo_target += 0.01;
+                wristServoTarget += 0.01;
             }
+            servoWrist.setPosition(wristServoTarget);
 
-
+            // === Airplane ===
             if (gamepad1.right_bumper){
                 servoAirplaneTrigger.setPosition(1);
             } else{
                 servoAirplaneTrigger.setPosition(0);
             }
 
-            //Arm Movement Code
             telemetry.addData("Arm Encoder Value", motorArm.getCurrentPosition());
             telemetry.addData("Gripper Servo Position", servoGripper.getPosition());
             telemetry.addData("Wrist Servo Position", servoWrist.getPosition());
+            telemetry.addData("Wrist Servo Target", wristServoTarget);
+            telemetry.addData("Manual Arm Power", manualArmPower);
+            telemetry.addData("Manual Arm Mode (bool)", armManualMode);
             telemetry.update();
         }
     }
