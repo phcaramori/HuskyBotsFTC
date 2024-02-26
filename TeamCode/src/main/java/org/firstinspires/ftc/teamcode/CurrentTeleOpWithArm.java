@@ -34,11 +34,11 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
     }
     public int degreesToTicks(float degrees){
         int ticks = (int) Math.round(degrees*12.444);
-        return ticks;
+        return ticks * -1;
     }
     public double ticksToDegrees(int ticks){
         double degrees = (double) ticks/12.444;
-        return degrees;
+        return degrees * -1;
     }
 
     DcMotor motorFrontLeft, motorFrontRight, motorBackLeft, motorBackRight, motorIntake, motorArm;
@@ -49,12 +49,13 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
 
     final double
             gripperClosedPos = 1, gripperOpenedPos = 0.4, //0 to 1
-            wristPickupPos = 0, wristScorePos = 0.75; //0 to 1 TODO: get this right
+            wristPickupPos = 0, wristScorePos = 0.6; //0 to 1 TODO: get this right
     final int armHomePos = 0, armPickupPos = 0, armScorePos = degreesToTicks(180); //0 to idk
     double manualArmPower = 0.0;
     boolean armManualMode = false, pixel_grab = false;
 
     double wristServoTarget = 0;
+    float proportionalArmPos = 0;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -73,9 +74,8 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
         motorArm = hardwareMap.get(DcMotor.class, "ArmMotor");
         motorFrontLeft.setDirection(DcMotor.Direction.REVERSE);
         motorBackLeft.setDirection(DcMotor.Direction.REVERSE);
-        motorFrontRight.setDirection(DcMotor.Direction.FORWARD);
         motorBackRight.setDirection(DcMotor.Direction.REVERSE);
-        motorArm.setDirection(DcMotor.Direction.REVERSE);
+        motorArm.setDirection(DcMotor.Direction.FORWARD);
 
         motorFrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorBackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -124,7 +124,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
             if (gamepad1.circle && !previousGamepad.circle) {
                 if (intake_on) {
                     intake_on = false;
-                    motorIntake.setPower(-1);
+                    motorIntake.setPower(1);
                 } else{
                     intake_on = true;
                     motorIntake.setPower(0);
@@ -132,7 +132,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
             }
 
             // === Arm ===
-            manualArmPower = (gamepad1.right_trigger - gamepad1.left_trigger) / 1.33; //-0.75 - .75
+            manualArmPower = (gamepad1.right_trigger - gamepad1.left_trigger) * 0.75; //-0.75 - .75
             if(manualArmPower != 0.00){
                 armManualMode = true;
                 motorArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -150,9 +150,11 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                     motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     motorArm.setPower(0.5);
                 }else if(gamepad1.square){ //pickup pos
+                    servoGripper.setPosition(gripperOpenedPos);
                     motorArm.setTargetPosition(armPickupPos);
                     motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    motorArm.setPower(Math.min(Math.abs(motorArm.getCurrentPosition())/1000, 1)); //TODO: check this
+                    //motorArm.setPower(Math.min(Math.abs(motorArm.getCurrentPosition())/1000, 1)); //TODO: check this
+                    motorArm.setPower(0.5); //TODO: check this
                 }
             }
 
@@ -170,10 +172,10 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
             }
 
             // === Auto Wrist Control Based on Arm ===
-            float proportionalArmPos = motorArm.getCurrentPosition()/armScorePos; //0-1; where 0 is pickup, 1 is score.
+            proportionalArmPos = (float) motorArm.getCurrentPosition() / (float) armScorePos; //0-1; where 0 is pickup, 1 is score.
             //wristServoTarget is = 0 for straight down, 1 for straight up; 0.5 for straight forward.
             if(ticksToDegrees(motorArm.getCurrentPosition()) < 10.0){
-                wristServoTarget = 0.1; // TODO: CHANGE THIS TOO, testing
+                wristServoTarget = 0.2; // TODO: CHANGE THIS TOO, testing
             } else if(proportionalArmPos <= 1.00){
                 wristServoTarget = proportionalArmPos * wristScorePos; // when proportionalArmPos == 1, wrist servo = 0.75
             } else if(proportionalArmPos > 1.00){
@@ -196,10 +198,12 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                 servoAirplaneTrigger.setPosition(0);
             }
 
-            telemetry.addData("Arm Encoder Value", motorArm.getCurrentPosition());
+            telemetry.addData("Proportional arm val", proportionalArmPos);
+            telemetry.addData("Arm Pos", motorArm.getCurrentPosition());
+            telemetry.addData("Arm sckre pos", armScorePos);
+            telemetry.addData("arm degree", ticksToDegrees(motorArm.getCurrentPosition()));
             telemetry.addData("Gripper Servo Position", servoGripper.getPosition());
             telemetry.addData("Wrist Servo Position", servoWrist.getPosition());
-            telemetry.addData("Wrist Servo Target", wristServoTarget);
             telemetry.addData("Manual Arm Power", manualArmPower);
             telemetry.addData("Manual Arm Mode (bool)", armManualMode);
             telemetry.update();
