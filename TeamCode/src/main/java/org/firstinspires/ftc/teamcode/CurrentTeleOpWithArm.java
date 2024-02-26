@@ -33,11 +33,11 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
 
     }
     public int degreesToTicks(float degrees){
-        int ticks = (int) Math.round(degrees*12.444);
+        int ticks = (int) Math.round(degrees*6.2222);
         return ticks * -1;
     }
     public double ticksToDegrees(int ticks){
-        double degrees = (double) ticks/12.444;
+        double degrees = (double) ticks/6.2222;
         return degrees * -1;
     }
 
@@ -48,11 +48,11 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
     double velocity_factor;
 
     final double
-            gripperClosedPos = 1, gripperOpenedPos = 0.4, //0 to 1
-            wristPickupPos = 0, wristScorePos = 0.6; //0 to 1 TODO: get this right
-    final int armHomePos = 0, armPickupPos = 0, armScorePos = degreesToTicks(180); //0 to idk
+            gripperClosedPos = 1, gripperOpenedPos = 0.5, //0 to 1
+            wristPickupPos = 0, wristScorePos = 1; //0 to 1
+    final int armHomePos = 0, armPickupPos = 0, armScorePos = degreesToTicks(162); //0 to idk
     double manualArmPower = 0.0;
-    boolean armManualMode = false, pixel_grab = false;
+    boolean armManualMode = false, pixel_grab = true;
 
     double wristServoTarget = 0;
     float proportionalArmPos = 0;
@@ -89,6 +89,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
         // --- ARM SETUP --- //:
         servoGripper = hardwareMap.get(Servo.class, "GripperServo");
         servoGripper.getController().pwmEnable();
+//        servoGripper.setDirection(Servo.Direction.REVERSE);
         servoWrist = hardwareMap.get(Servo.class, "WristServo");
         servoWrist.getController().pwmEnable();
 
@@ -148,13 +149,13 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                     servoGripper.setPosition(gripperClosedPos);
                     motorArm.setTargetPosition(armScorePos);
                     motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    motorArm.setPower(0.5);
+                    motorArm.setPower(0.25);
                 }else if(gamepad1.square){ //pickup pos
                     servoGripper.setPosition(gripperOpenedPos);
                     motorArm.setTargetPosition(armPickupPos);
                     motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     //motorArm.setPower(Math.min(Math.abs(motorArm.getCurrentPosition())/1000, 1)); //TODO: check this
-                    motorArm.setPower(0.5); //TODO: check this
+                    motorArm.setPower(0.25); //TODO: check this
                 }
             }
 
@@ -174,12 +175,18 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
             // === Auto Wrist Control Based on Arm ===
             proportionalArmPos = (float) motorArm.getCurrentPosition() / (float) armScorePos; //0-1; where 0 is pickup, 1 is score.
             //wristServoTarget is = 0 for straight down, 1 for straight up; 0.5 for straight forward.
-            if(ticksToDegrees(motorArm.getCurrentPosition()) < 10.0){
-                wristServoTarget = 0.2; // TODO: CHANGE THIS TOO, testing
-            } else if(proportionalArmPos <= 1.00){
-                wristServoTarget = proportionalArmPos * wristScorePos; // when proportionalArmPos == 1, wrist servo = 0.75
+//            if(ticksToDegrees(motorArm.getCurrentPosition()) < 10.0){
+//                wristServoTarget = 0.15; // TODO: CHANGE THIS TOO, testing
+//            } else
+            if(proportionalArmPos <= 0.15){
+                int constant = 15;
+                wristServoTarget = Math.pow(constant*(0.15 - proportionalArmPos), 2)/constant;
+            }else if(proportionalArmPos <= 0.25){
+                wristServoTarget = 0;
+            } else if(proportionalArmPos <= 1.00) {
+                wristServoTarget = (proportionalArmPos - 0.25)/0.75 * wristScorePos; // subtraction and division eliminate a potential jump discontinuity
             } else if(proportionalArmPos > 1.00){
-                wristServoTarget = wristScorePos - (proportionalArmPos - 1); //TODO: change this 1, test to keep wrist parallel to backboard
+                wristServoTarget = wristScorePos - 1*(proportionalArmPos - 1); //TODO: change this 1, test to keep wrist parallel to backboard
             }
 
             // === Manual Wrist Control ===
