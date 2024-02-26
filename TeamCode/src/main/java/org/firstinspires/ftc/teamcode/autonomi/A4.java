@@ -26,18 +26,9 @@ public class A4 extends LinearOpMode {
     double frontLeftPower = 0, backLeftPower = 0, frontRightPower = 0, backRightPower = 0;
     @Override
     public void runOpMode() throws InterruptedException {
-
-
-        motorFrontLeft = hardwareMap.get(DcMotor.class, "FrontLeft");
-        motorFrontRight = hardwareMap.get(DcMotor.class, "FrontRight");
-        motorBackLeft = hardwareMap.get(DcMotor.class, "BackLeft");
-        motorBackRight = hardwareMap.get(DcMotor.class, "BackRight");
         motorIntake = hardwareMap.get(DcMotor.class, "IntakeMotor");
         motorArm = hardwareMap.get(DcMotor.class, "ArmMotor");
         motorFrontLeft.setDirection(DcMotor.Direction.REVERSE);
-        motorBackLeft.setDirection(DcMotor.Direction.REVERSE);
-        motorFrontRight.setDirection(DcMotor.Direction.FORWARD);
-        motorBackRight.setDirection(DcMotor.Direction.REVERSE);
         motorArm.setDirection(DcMotor.Direction.REVERSE);
 
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
