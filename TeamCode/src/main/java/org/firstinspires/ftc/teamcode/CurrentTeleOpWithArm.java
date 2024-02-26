@@ -47,15 +47,14 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
     boolean intake_on = false;
     double velocity_factor;
 
-    //TODO: Set up pos constants
     final double
-            gripperPickupPos = 1, gripperScorePos = 0.4, //0 to 1
-            wristPickupPos = 0, wristScorePos = 0; //0 to 1
-    final int armHomePos = 0, armPickupPos = 0, armScorePos = 0; //0 to idk
+            gripperClosedPos = 1, gripperOpenedPos = 0.4, //0 to 1
+            wristPickupPos = 0, wristScorePos = 0.75; //0 to 1 TODO: get this right
+    final int armHomePos = 0, armPickupPos = 0, armScorePos = degreesToTicks(180); //0 to idk
     double manualArmPower = 0.0;
     boolean armManualMode = false, pixel_grab = false;
 
-    float wristServoTarget = 0;
+    double wristServoTarget = 0;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -146,21 +145,18 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                     motorArm.setPower(0);
                 }
                 if(gamepad1.triangle){ //score
-                    if(motorArm.getCurrentPosition()==armPickupPos){
-                        servoGripper.setPosition(gripperScorePos);
-                    }
+                    servoGripper.setPosition(gripperClosedPos);
                     motorArm.setTargetPosition(armScorePos);
                     motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    motorArm.setPower(1.0);
+                    motorArm.setPower(0.5);
                 }else if(gamepad1.square){ //pickup pos
-                    servoGripper.setPosition(gripperPickupPos);
                     motorArm.setTargetPosition(armPickupPos);
                     motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    motorArm.setPower(Math.min(Math.abs(motorArm.getCurrentPosition())/1000, 1));
+                    motorArm.setPower(Math.min(Math.abs(motorArm.getCurrentPosition())/1000, 1)); //TODO: check this
                 }
             }
 
-            // === Gripper ===
+            // === Manual Gripper Control ===
             if(gamepad1.dpad_down){
                 pixel_grab = true;
             }
@@ -168,21 +164,21 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                 pixel_grab = false;
             }
             if(pixel_grab){
-                servoGripper.setPosition(gripperPickupPos);
+                servoGripper.setPosition(gripperClosedPos);
             }else{
-                servoGripper.setPosition(gripperScorePos);
+                servoGripper.setPosition(gripperOpenedPos);
             }
 
-            // === Wrist Control Based on Arm ===
-            //TODO: get these constants correct
-            float proportionalArmPos = motorArm.getCurrentPosition()/armScorePos; //0-100; where 0 is pickup, 1 is score.
+            // === Auto Wrist Control Based on Arm ===
+            float proportionalArmPos = motorArm.getCurrentPosition()/armScorePos; //0-1; where 0 is pickup, 1 is score.
             //wristServoTarget is = 0 for straight down, 1 for straight up; 0.5 for straight forward.
-            if(proportionalArmPos <= 1){
-                wristServoTarget = proportionalArmPos / 2;
-            } else if(proportionalArmPos > 1){
-                wristServoTarget = proportionalArmPos / 2;
+            if(ticksToDegrees(motorArm.getCurrentPosition()) < 10.0){
+                wristServoTarget = 0.1; // TODO: CHANGE THIS TOO, testing
+            } else if(proportionalArmPos <= 1.00){
+                wristServoTarget = proportionalArmPos * wristScorePos; // when proportionalArmPos == 1, wrist servo = 0.75
+            } else if(proportionalArmPos > 1.00){
+                wristServoTarget = wristScorePos - (proportionalArmPos - 1); //TODO: change this 1, test to keep wrist parallel to backboard
             }
-
 
             // === Manual Wrist Control ===
             if(gamepad1.dpad_left){
@@ -191,6 +187,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                 wristServoTarget += 0.01;
             }
             servoWrist.setPosition(wristServoTarget);
+
 
             // === Airplane ===
             if (gamepad1.right_bumper){
