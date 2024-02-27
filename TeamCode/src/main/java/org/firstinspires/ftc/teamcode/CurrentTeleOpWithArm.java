@@ -44,7 +44,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
     DcMotor motorFrontLeft, motorFrontRight, motorBackLeft, motorBackRight, motorIntake, motorArm;
     Servo servoAirplaneTrigger, servoGripper, servoWrist;
     double frontLeftPower = 0, backLeftPower = 0, frontRightPower = 0, backRightPower = 0;
-    boolean intake_on = false, reverse_intake_on = false;
+    boolean intake_on = false, reverse_intake_on = false, safetiesDisabled = false, safetyOn = false;
     double velocity_factor;
 
     final double
@@ -168,6 +168,35 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                 }
             }
 
+            // === Auto Wrist Control Based on Arm ===
+            proportionalArmPos = (float) motorArm.getCurrentPosition() / (float) armScorePos; //0-1; where 0 is pickup, 1 is score.
+            //wristServoTarget is = 0 for straight down, 1 for straight up; 0.5 for straight forward.
+            if(proportionalArmPos < 1.4 && proportionalArmPos > -0.1){ //if in operational margins
+                safetyOn = false;
+                if(proportionalArmPos <= 0.15){
+                    int constant = 15;
+                    wristServoTarget = Math.pow(constant*(0.15 - proportionalArmPos), 2)/constant; //quadratic, ends at ~.15
+                }else if(proportionalArmPos <= 0.25){
+                    wristServoTarget = 0;
+                } else if(proportionalArmPos <= 1.00) {
+                    wristServoTarget = (proportionalArmPos - 0.25)/0.75 * wristScorePos; // subtraction and division eliminate a potential jump discontinuity
+                } else if(proportionalArmPos > 1.00){
+                    wristServoTarget = wristScorePos - 1*(proportionalArmPos - 1);
+                }
+            }else { //if outside margins
+                safetyOn = true;
+                if(proportionalArmPos > 1.4){
+                    motorArm.setTargetPosition(armScorePos);
+                    motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    motorArm.setPower(0.25);
+                }else if(proportionalArmPos < -0.1){
+                    motorArm.setTargetPosition(armPickupPos);
+                    motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    motorArm.setPower(0.25);
+                }
+            }
+            servoWrist.setPosition(wristServoTarget);
+
             // === Manual Gripper Control ===
             if(gamepad1.dpad_down){
                 pixel_grab = true;
@@ -181,27 +210,12 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                 servoGripper.setPosition(gripperOpenedPos);
             }
 
-            // === Auto Wrist Control Based on Arm ===
-            proportionalArmPos = (float) motorArm.getCurrentPosition() / (float) armScorePos; //0-1; where 0 is pickup, 1 is score.
-            //wristServoTarget is = 0 for straight down, 1 for straight up; 0.5 for straight forward.
-            if(proportionalArmPos <= 0.15){
-                int constant = 15;
-                wristServoTarget = Math.pow(constant*(0.15 - proportionalArmPos), 2)/constant;
-            }else if(proportionalArmPos <= 0.25){
-                wristServoTarget = 0;
-            } else if(proportionalArmPos <= 1.00) {
-                wristServoTarget = (proportionalArmPos - 0.25)/0.75 * wristScorePos; // subtraction and division eliminate a potential jump discontinuity
-            } else if(proportionalArmPos > 1.00){
-                wristServoTarget = wristScorePos - 1*(proportionalArmPos - 1); //TODO: change this 1, test to keep wrist parallel to backboard
-            }
-
-            // === Manual Wrist Control ===
-            if(gamepad1.dpad_left){
-                wristServoTarget -= 0.01;
-            } else if (gamepad1.dpad_right) {
-                wristServoTarget += 0.01;
-            }
-            servoWrist.setPosition(wristServoTarget);
+//            // === Manual Wrist Control ===
+//            if(gamepad1.dpad_left){
+//                wristServoTarget -= 0.01;
+//            } else if (gamepad1.dpad_right) {
+//                wristServoTarget += 0.01;
+//            } obsolete
 
 
             // === Airplane ===
@@ -211,11 +225,29 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                 servoAirplaneTrigger.setPosition(0);
             }
 
+            // === Safeties ===
+            // (implementation on arm code)
+            if(gamepad1.options && !previousGamepad.options){
+                if(safetiesDisabled){
+                    safetiesDisabled = false;
+                } else{
+                    safetiesDisabled = true;
+                }
+            }
+            if(safetyOn){
+                gamepad1.rumble(1); //might be fun idk
+            }
+            // === Zeroing ===
+            if(gamepad1.share && !previousGamepad.share){
+                motorArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                motorArm.setPower(0.0);
+                motorArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            }
+
+
             telemetry.addData("Proportional arm val", proportionalArmPos);
             telemetry.addData("Arm Pos", motorArm.getCurrentPosition());
-            telemetry.addData("Arm sckre pos", armScorePos);
             telemetry.addData("arm degree", ticksToDegrees(motorArm.getCurrentPosition()));
-            telemetry.addData("Gripper Servo Position", servoGripper.getPosition());
             telemetry.addData("Wrist Servo Position", servoWrist.getPosition());
             telemetry.addData("Manual Arm Power", manualArmPower);
             telemetry.addData("Manual Arm Mode (bool)", armManualMode);
