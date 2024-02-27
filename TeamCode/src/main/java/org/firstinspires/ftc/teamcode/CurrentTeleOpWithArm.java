@@ -44,13 +44,13 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
     DcMotor motorFrontLeft, motorFrontRight, motorBackLeft, motorBackRight, motorIntake, motorArm;
     Servo servoAirplaneTrigger, servoGripper, servoWrist;
     double frontLeftPower = 0, backLeftPower = 0, frontRightPower = 0, backRightPower = 0;
-    boolean intake_on = false;
+    boolean intake_on = false, reverse_intake_on = false;
     double velocity_factor;
 
     final double
             gripperClosedPos = 1, gripperOpenedPos = 0.5, //0 to 1
             wristPickupPos = 0, wristScorePos = 1; //0 to 1
-    final int armHomePos = 0, armPickupPos = 0, armScorePos = degreesToTicks(162); //0 to idk
+    final int armPickupPos = degreesToTicks(5), armScorePos = degreesToTicks(162); //0 to idk
     double manualArmPower = 0.0;
     boolean armManualMode = false, pixel_grab = true;
 
@@ -131,6 +131,15 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                     motorIntake.setPower(0);
                 }
             }
+            if (gamepad1.square && !previousGamepad.square) {
+                if (reverse_intake_on) {
+                    reverse_intake_on = false;
+                    motorIntake.setPower(-1);
+                } else{
+                    reverse_intake_on = true;
+                    motorIntake.setPower(0);
+                }
+            }
 
             // === Arm ===
             manualArmPower = (gamepad1.right_trigger - gamepad1.left_trigger) * 0.75; //-0.75 - .75
@@ -150,7 +159,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                     motorArm.setTargetPosition(armScorePos);
                     motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     motorArm.setPower(0.25);
-                }else if(gamepad1.square){ //pickup pos
+                }else if(gamepad1.x){ //pickup pos
                     servoGripper.setPosition(gripperOpenedPos);
                     motorArm.setTargetPosition(armPickupPos);
                     motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -175,9 +184,6 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
             // === Auto Wrist Control Based on Arm ===
             proportionalArmPos = (float) motorArm.getCurrentPosition() / (float) armScorePos; //0-1; where 0 is pickup, 1 is score.
             //wristServoTarget is = 0 for straight down, 1 for straight up; 0.5 for straight forward.
-//            if(ticksToDegrees(motorArm.getCurrentPosition()) < 10.0){
-//                wristServoTarget = 0.15; // TODO: CHANGE THIS TOO, testing
-//            } else
             if(proportionalArmPos <= 0.15){
                 int constant = 15;
                 wristServoTarget = Math.pow(constant*(0.15 - proportionalArmPos), 2)/constant;
