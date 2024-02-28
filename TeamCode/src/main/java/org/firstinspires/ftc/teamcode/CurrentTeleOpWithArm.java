@@ -50,7 +50,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
     final double
             gripperClosedPos = 1, gripperOpenedPos = 0.5, //0 to 1
             wristPickupPos = 0, wristScorePos = 1; //0 to 1
-    final int armPickupPos = degreesToTicks(5), armScorePos = degreesToTicks(162); //0 to idk
+    final int armPickupPos = 0, armScorePos = degreesToTicks(150); //0 to idk
     double manualArmPower = 0.0;
     boolean armManualMode = false, pixel_grab = true;
 
@@ -159,7 +159,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                     motorArm.setTargetPosition(armScorePos);
                     motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     motorArm.setPower(0.25);
-                }else if(gamepad1.x){ //pickup pos
+                }else if(gamepad1.cross){ //pickup pos
                     servoGripper.setPosition(gripperOpenedPos);
                     motorArm.setTargetPosition(armPickupPos);
                     motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -171,11 +171,11 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
             // === Auto Wrist Control Based on Arm ===
             proportionalArmPos = (float) motorArm.getCurrentPosition() / (float) armScorePos; //0-1; where 0 is pickup, 1 is score.
             //wristServoTarget is = 0 for straight down, 1 for straight up; 0.5 for straight forward.
-            if(proportionalArmPos < 1.4 && proportionalArmPos > -0.1){ //if in operational margins
+            if(proportionalArmPos < 1.666 && proportionalArmPos > -0.1){ //if in operational margins
                 safetyOn = false;
                 if(proportionalArmPos <= 0.15){
-                    int constant = 15;
-                    wristServoTarget = Math.pow(constant*(0.15 - proportionalArmPos), 2)/constant; //quadratic, ends at ~.15
+                    int constant = 10;
+                    wristServoTarget = Math.pow(constant*(0.15 - proportionalArmPos), 1.75)/constant; //quadratic, ends at ~.15
                 }else if(proportionalArmPos <= 0.25){
                     wristServoTarget = 0;
                 } else if(proportionalArmPos <= 1.00) {
@@ -235,7 +235,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                 }
             }
             if(safetyOn){
-                gamepad1.rumble(1); //might be fun idk
+                gamepad1.rumble(100); //might be fun idk
             }
             // === Zeroing ===
             if(gamepad1.share && !previousGamepad.share){
@@ -251,6 +251,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
             telemetry.addData("Wrist Servo Position", servoWrist.getPosition());
             telemetry.addData("Manual Arm Power", manualArmPower);
             telemetry.addData("Manual Arm Mode (bool)", armManualMode);
+            telemetry.addData("Gripper pos", servoGripper.getPosition());
             telemetry.update();
         }
     }
