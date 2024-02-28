@@ -125,19 +125,19 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
             if (gamepad1.circle && !previousGamepad.circle) {
                 if (intake_on) {
                     intake_on = false;
-                    motorIntake.setPower(1);
+                    motorIntake.setPower(0);
                 } else{
                     intake_on = true;
-                    motorIntake.setPower(0);
+                    motorIntake.setPower(1);
                 }
             }
             if (gamepad1.square && !previousGamepad.square) {
                 if (reverse_intake_on) {
                     reverse_intake_on = false;
-                    motorIntake.setPower(-1);
+                    motorIntake.setPower(0);
                 } else{
                     reverse_intake_on = true;
-                    motorIntake.setPower(0);
+                    motorIntake.setPower(-1);
                 }
             }
 
