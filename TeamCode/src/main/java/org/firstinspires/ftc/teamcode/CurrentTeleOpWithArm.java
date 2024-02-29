@@ -81,6 +81,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
         motorBackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorFrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorBackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        motorIntake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         servoAirplaneTrigger = hardwareMap.get(Servo.class, "AirplaneTriggerServo");
         servoAirplaneTrigger.setDirection(Servo.Direction.REVERSE);
@@ -137,6 +138,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                     motorIntake.setPower(1);
                 }
             }
+
             if (gamepad1.square && !previousGamepad.square) {
                 if (reverse_intake_on) {
                     reverse_intake_on = false;
@@ -220,14 +222,6 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                 servoGripper.setPosition(gripperOpenedPos);
             }
 
-//            // === Manual Wrist Control ===
-//            if(gamepad1.dpad_left){
-//                servoPurpleDepositor.setPosition(0);
-//            } else if (gamepad1.dpad_right) {
-//                servoPurpleDepositor.setPosition(1);
-//            }
-
-
             // === Airplane ===
             if (gamepad1.right_bumper){
                 servoAirplaneTrigger.setPosition(1);
@@ -254,6 +248,18 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                 motorArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             }
 
+            // === colors!!! ===
+            if(safetyOn){
+                gamepad1.setLedColor(255,0,0,10); //red
+            }else if(intake_on){
+                gamepad1.setLedColor(255,0,255,10); //purple
+            }else if(pixel_grab){
+                gamepad1.setLedColor(0,255,0,10); //green, w/ pixel!
+            }else if(armManualMode){
+                gamepad1.setLedColor(255,255,0,10); //yellow
+            } else{
+                gamepad1.setLedColor(0,0,255,10); //blue = ok
+            }
 
             telemetry.addData("Proportional arm val", proportionalArmPos);
             telemetry.addData("Arm Pos", motorArm.getCurrentPosition());
