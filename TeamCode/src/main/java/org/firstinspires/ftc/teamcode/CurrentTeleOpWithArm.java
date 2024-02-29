@@ -42,7 +42,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
     }
 
     DcMotor motorFrontLeft, motorFrontRight, motorBackLeft, motorBackRight, motorIntake, motorArm;
-    Servo servoAirplaneTrigger, servoGripper, servoWrist;
+    Servo servoAirplaneTrigger, servoGripper, servoWrist, servoPurpleDepositor;
     double frontLeftPower = 0, backLeftPower = 0, frontRightPower = 0, backRightPower = 0;
     boolean intake_on = false, reverse_intake_on = false, safetiesDisabled = false, safetyOn = false;
     double velocity_factor;
@@ -50,7 +50,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
     final double
             gripperClosedPos = 1, gripperOpenedPos = 0.5, //0 to 1
             wristPickupPos = 0, wristScorePos = 1; //0 to 1
-    final int armPickupPos = 0, armScorePos = degreesToTicks(150); //0 to idk
+    final int armPickupPos = 0, armScorePos = degreesToTicks(150), armHomePos = degreesToTicks(45); //0 to idk
     double manualArmPower = 0.0;
     boolean armManualMode = false, pixel_grab = true;
 
@@ -86,6 +86,10 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
         servoAirplaneTrigger.setDirection(Servo.Direction.REVERSE);
         servoAirplaneTrigger.getController().pwmEnable();
 
+
+        servoPurpleDepositor = hardwareMap.get(Servo.class, "PurpleDepositorServo");
+        servoPurpleDepositor.getController().pwmEnable();
+
         // --- ARM SETUP --- //:
         servoGripper = hardwareMap.get(Servo.class, "GripperServo");
         servoGripper.getController().pwmEnable();
@@ -106,6 +110,8 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
         if (isStopRequested()) {
             return;
         }
+
+        servoPurpleDepositor.setPosition(0);
 
         while (opModeIsActive()) {
             previousGamepad.copy(currentGamepad);
@@ -165,6 +171,10 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                     motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     //motorArm.setPower(Math.min(Math.abs(motorArm.getCurrentPosition())/1000, 1)); //TODO: check this
                     motorArm.setPower(0.25); //TODO: check this
+                } else if (gamepad1.left_bumper){
+                    motorArm.setTargetPosition(armHomePos);
+                    motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    motorArm.setPower(0.25);
                 }
             }
 
@@ -183,9 +193,9 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
                 } else if(proportionalArmPos > 1.00){
                     wristServoTarget = wristScorePos - 1*(proportionalArmPos - 1);
                 }
-            }else { //if outside margins
+            }else if(!safetiesDisabled){ //if outside margins
                 safetyOn = true;
-                if(proportionalArmPos > 1.4){
+                if(proportionalArmPos > 1.6){
                     motorArm.setTargetPosition(armScorePos);
                     motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     motorArm.setPower(0.25);
@@ -212,10 +222,10 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
 
 //            // === Manual Wrist Control ===
 //            if(gamepad1.dpad_left){
-//                wristServoTarget -= 0.01;
+//                servoPurpleDepositor.setPosition(0);
 //            } else if (gamepad1.dpad_right) {
-//                wristServoTarget += 0.01;
-//            } obsolete
+//                servoPurpleDepositor.setPosition(1);
+//            }
 
 
             // === Airplane ===

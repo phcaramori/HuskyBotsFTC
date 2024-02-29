@@ -33,7 +33,7 @@ public class OpenCVTest extends LinearOpMode {
     @Override
     public void runOpMode() {
 
-        initOpenCVBlue();
+        initOpenCVRed();
         FtcDashboard dashboard = FtcDashboard.getInstance();
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
         FtcDashboard.getInstance().startCameraStream(controlHubCam, 30);
@@ -43,7 +43,7 @@ public class OpenCVTest extends LinearOpMode {
 
         while (opModeIsActive()) {
             telemetry.addData("Coordinate", "(" + (int) cX + ", " + (int) cY + ")");
-            if(cX < 100){
+            if(cX < 200){
                 telemetry.addData("Team Prop Location: ", "Left");
             } else if(cX < 400){
                 telemetry.addData("Team Prop Location: ", "Center");
@@ -173,20 +173,19 @@ public class OpenCVTest extends LinearOpMode {
             Imgproc.cvtColor(frame, hsvFrame, Imgproc.COLOR_RGB2HSV);
 
             Scalar lowerRed1 = new Scalar(0, 100, 100);
-            Scalar upperRed1 = new Scalar(20, 255, 255);
+            Scalar upperRed1 = new Scalar(15, 255, 255);
 
-            Scalar lowerRed2 = new Scalar(235, 100, 100);
-            Scalar upperRed2 = new Scalar(255, 255, 255);
+            Scalar lowerRed2 = new Scalar(160, 100, 100);
+            Scalar upperRed2 = new Scalar(180, 255, 255);
 
 
             Mat redMask1 = new Mat();
             Mat redMask2 = new Mat();
+            Mat redMask = new Mat();
 
             Core.inRange(hsvFrame, lowerRed1, upperRed1, redMask1);
             Core.inRange(hsvFrame, lowerRed2, upperRed2, redMask2);
-
-            Mat redMask = new Mat();
-
+//
             Core.add(redMask1, redMask2, redMask);
 
 
