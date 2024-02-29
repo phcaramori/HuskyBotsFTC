@@ -115,10 +115,10 @@ public class F2 extends LinearOpMode {
                                 DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL * 0.5))
                 .build();
-        Trajectory rightDisengageStrafe = drive.trajectoryBuilder(leftProp.end())
+        Trajectory rightDisengageStrafe = drive.trajectoryBuilder(rightProp.end())
                 .strafeLeft(10).build();
-        Trajectory rightBackboard = drive.trajectoryBuilder(leftDisengageStrafe.end())
-                .splineToLinearHeading(new Pose2d(-36.2, -46, Math.PI/2), leftDisengageStrafe.end().getHeading())
+        Trajectory rightBackboard = drive.trajectoryBuilder(rightDisengageStrafe.end())
+                .splineToLinearHeading(new Pose2d(-36.2, -46, Math.PI/2), rightDisengageStrafe.end().getHeading())
                 .build();
         Trajectory centerProp = drive.trajectoryBuilder(starting_position)
                 .splineToLinearHeading(new Pose2d(-26.3, 48.1, 0), starting_position.getHeading())
@@ -132,7 +132,7 @@ public class F2 extends LinearOpMode {
         Trajectory leftPropXPositioning = drive.trajectoryBuilder(starting_position)
                 .lineToLinearHeading(new Pose2d(-36.7, starting_position.getY(), 0))
                 .build();
-        Trajectory leftProp = drive.trajectoryBuilder(RightPropXPositioning.end())
+        Trajectory leftProp = drive.trajectoryBuilder(leftPropXPositioning.end())
                 .strafeRight(3).build();
         Trajectory leftDisengageStrafe = drive.trajectoryBuilder(leftProp.end())
                 .strafeLeft(10).build();
