@@ -32,7 +32,7 @@ import org.openftc.easyopencv.OpenCvPipeline;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-@Autonomous(name="F4 (Red Team Close to Board")
+@Autonomous(name="F4 (Red Team Close to Board)")
 public class F4 extends LinearOpMode {
 
     DcMotor motorFrontLeft, motorFrontRight, motorBackLeft, motorBackRight, motorIntake,
@@ -55,19 +55,18 @@ public class F4 extends LinearOpMode {
     float proportionalArmPos = 0;
 
     public int TeamPropPositionCalculator(){
-        initOpenCVRed();
-        telemetry.addData("cX", cX);
+//        telemetry.addData("cX", cX);
         if(cX < 200){
-            telemetry.addData("Team Prop Location: ", "Left");
-            telemetry.update();
+//            telemetry.addData("Team Prop Location: ", "Left");
+//            telemetry.update();
             return 0; //Left
         } else if(cX < 400){
-            telemetry.addData("Team Prop Location: ", "Center");
-            telemetry.update();
+//            telemetry.addData("Team Prop Location: ", "Center");
+//            telemetry.update();
             return 1; //center
         } else{
-            telemetry.addData("Team Prop Location: ", "Right");
-            telemetry.update();
+//            telemetry.addData("Team Prop Location: ", "Right");
+//            telemetry.update();
             return 2; //right
         }
     }
@@ -78,7 +77,7 @@ public class F4 extends LinearOpMode {
 
         FtcDashboard dashboard = FtcDashboard.getInstance();
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
-        FtcDashboard.getInstance().startCameraStream(controlHubCam, 30);
+//        FtcDashboard.getInstance().startCameraStream(controlHubCam, 30);
 
         motorIntake = hardwareMap.get(DcMotor.class, "IntakeMotor");
         motorArm = hardwareMap.get(DcMotor.class, "ArmMotor");
@@ -131,7 +130,7 @@ public class F4 extends LinearOpMode {
                 .build();
 
         Trajectory leftPropXPositioning = drive.trajectoryBuilder(starting_position)
-                .back(20)
+                .lineToLinearHeading(new Pose2d(-36.7, starting_position.getY(), 0))
                 .build();
         Trajectory leftProp = drive.trajectoryBuilder(leftPropXPositioning.end())
                 .strafeLeft(3).build();
@@ -140,12 +139,18 @@ public class F4 extends LinearOpMode {
         Trajectory leftBackboard = drive.trajectoryBuilder(leftDisengageStrafe.end())
                 .splineToLinearHeading(new Pose2d(-36.2, -46, Math.PI/2), leftDisengageStrafe.end().getHeading())
                 .build();
-
-        teamPropPlacement = TeamPropPositionCalculator();
+        Trajectory tuckAway = drive.trajectoryBuilder(rightBackboard.end())
+                .strafeLeft(20).build();
+        initOpenCVRed();
+        while(opModeInInit()){
+            teamPropPlacement = TeamPropPositionCalculator();
+        }
         waitForStart();
         servoPurpleDepositor.setPosition(0);
         drive.setPoseEstimate(starting_position);
         if(teamPropPlacement == 0){ // I messed up Left and Right somewhere
+            telemetry.addData("TeamPropPosition: ", "Left");
+            telemetry.update();
             drive.followTrajectory(leftPropXPositioning);
             drive.followTrajectory(leftProp);
             servoPurpleDepositor.setPosition(0.7);
@@ -153,12 +158,16 @@ public class F4 extends LinearOpMode {
             drive.followTrajectory(leftDisengageStrafe);
             drive.followTrajectory(leftBackboard);
         } else if(teamPropPlacement == 1){
+            telemetry.addData("TeamPropPosition: ", "Center");
+            telemetry.update();
             drive.followTrajectory(centerProp);
             servoPurpleDepositor.setPosition(0.7);
             sleep(1000);
             drive.followTrajectory(centerDisengageStrafe);
             drive.followTrajectory(centerBackboard);
         } else{
+            telemetry.addData("TeamPropPosition: ", "Right");
+            telemetry.update();
             drive.followTrajectory(rightProp);
             servoPurpleDepositor.setPosition(0.7);
             sleep(1000);
@@ -167,7 +176,7 @@ public class F4 extends LinearOpMode {
         }
 
         servoGripper.setPosition(gripperClosedPos);
-        motorArm.setTargetPosition(armScorePos+degreesToTicks(20));
+        motorArm.setTargetPosition(armScorePos+degreesToTicks(15));
         motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorArm.setPower(0.25);
 
@@ -185,10 +194,12 @@ public class F4 extends LinearOpMode {
                 wristServoTarget = wristScorePos - 1*(proportionalArmPos - 1);
             }
             servoWrist.setPosition(wristServoTarget);
+            if(motorArm.getCurrentPosition() > armScorePos+degreesToTicks(5)){
+                servoGripper.setPosition(gripperOpenedPos);
+                break;
+            }
         }
-        if(motorArm.getCurrentPosition() > armScorePos+degreesToTicks(17)){
-            servoGripper.setPosition(gripperOpenedPos);
-        }
+        drive.followTrajectory(tuckAway);
     }
 
     public int degreesToTicks(float degrees){
