@@ -50,7 +50,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
     final double
             gripperClosedPos = 1, gripperOpenedPos = 0.5, //0 to 1
             wristPickupPos = 0, wristScorePos = 1; //0 to 1
-    final int armPickupPos = 0, armScorePos = degreesToTicks(150), armHomePos = degreesToTicks(45); //0 to idk
+    final int armPickupPos = 0, armScorePos = degreesToTicks(165), armHomePos = degreesToTicks(45); //0 to idk
     double manualArmPower = 0.0;
     boolean armManualMode = false, pixel_grab = true;
 
@@ -249,17 +249,17 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
             }
 
             // === colors!!! ===
-            if(safetyOn){
-                gamepad1.setLedColor(255,0,0,10); //red
-            }else if(intake_on){
-                gamepad1.setLedColor(255,0,255,10); //purple
-            }else if(pixel_grab){
-                gamepad1.setLedColor(0,255,0,10); //green, w/ pixel!
-            }else if(armManualMode){
-                gamepad1.setLedColor(255,255,0,10); //yellow
-            } else{
-                gamepad1.setLedColor(0,0,255,10); //blue = ok
-            }
+//            if(safetyOn){
+//                gamepad1.setLedColor(255,0,0,10); //red
+//            }else if(intake_on){
+//                gamepad1.setLedColor(255,0,255,10); //purple
+//            }else if(pixel_grab){
+//                gamepad1.setLedColor(0,255,0,10); //green, w/ pixel!
+//            }else if(armManualMode){
+//                gamepad1.setLedColor(255,255,0,10); //yellow
+//            } else{
+//                gamepad1.setLedColor(0,0,255,10); //blue = ok
+//            }
 
             telemetry.addData("Proportional arm val", proportionalArmPos);
             telemetry.addData("Arm Pos", motorArm.getCurrentPosition());

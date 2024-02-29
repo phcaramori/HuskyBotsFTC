@@ -121,7 +121,7 @@ public class F2 extends LinearOpMode {
                 .splineToLinearHeading(new Pose2d(-36.2, -46, Math.PI/2), rightDisengageStrafe.end().getHeading())
                 .build();
         Trajectory centerProp = drive.trajectoryBuilder(starting_position)
-                .splineToLinearHeading(new Pose2d(-26.3, 48.1, 0), starting_position.getHeading())
+                .splineToLinearHeading(new Pose2d(-26.3, 48.1, 2*Math.PI), starting_position.getHeading())
                 .build();
         Trajectory centerDisengageStrafe = drive.trajectoryBuilder(centerProp.end())
                 .strafeLeft(10).build();
@@ -130,7 +130,7 @@ public class F2 extends LinearOpMode {
                 .build();
 
         Trajectory leftPropXPositioning = drive.trajectoryBuilder(starting_position)
-                .lineToLinearHeading(new Pose2d(-36.7, starting_position.getY(), 0))
+                .lineToLinearHeading(new Pose2d(-36.7, starting_position.getY(), 2*Math.PI))
                 .build();
         Trajectory leftProp = drive.trajectoryBuilder(leftPropXPositioning.end())
                 .strafeRight(3).build();
@@ -155,30 +155,30 @@ public class F2 extends LinearOpMode {
             drive.followTrajectory(leftProp);
             servoPurpleDepositor.setPosition(0.7);
             sleep(1000);
-            drive.followTrajectory(leftDisengageStrafe);
-            drive.followTrajectory(leftBackboard);
+//            drive.followTrajectory(leftDisengageStrafe);
+//            drive.followTrajectory(leftBackboard);
         } else if(teamPropPlacement == 1){
             telemetry.addData("TeamPropPosition: ", "Center");
             telemetry.update();
             drive.followTrajectory(centerProp);
             servoPurpleDepositor.setPosition(0.7);
             sleep(1000);
-            drive.followTrajectory(centerDisengageStrafe);
-            drive.followTrajectory(centerBackboard);
+//            drive.followTrajectory(centerDisengageStrafe);
+//            drive.followTrajectory(centerBackboard);
         } else{
             telemetry.addData("TeamPropPosition: ", "Right");
             telemetry.update();
             drive.followTrajectory(rightProp);
             servoPurpleDepositor.setPosition(0.7);
             sleep(1000);
-            drive.followTrajectory(rightDisengageStrafe);
-            drive.followTrajectory(rightBackboard);
+//            drive.followTrajectory(rightDisengageStrafe);
+//            drive.followTrajectory(rightBackboard);
         }
 
-        servoGripper.setPosition(gripperClosedPos);
-        motorArm.setTargetPosition(armScorePos+degreesToTicks(15));
-        motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motorArm.setPower(0.25);
+//        servoGripper.setPosition(gripperClosedPos);
+//        motorArm.setTargetPosition(armScorePos+degreesToTicks(15));
+//        motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//        motorArm.setPower(0.25);
 
         while(opModeIsActive()){
             proportionalArmPos = (float) motorArm.getCurrentPosition() / (float) armScorePos; //0-1; where 0 is pickup, 1 is score.
@@ -195,7 +195,7 @@ public class F2 extends LinearOpMode {
             }
             servoWrist.setPosition(wristServoTarget);
             if(motorArm.getCurrentPosition() > armScorePos+degreesToTicks(5)){
-                servoGripper.setPosition(gripperOpenedPos);
+//                servoGripper.setPosition(gripperOpenedPos);
                 break;
             }
         }

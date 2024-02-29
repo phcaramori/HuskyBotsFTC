@@ -16,6 +16,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.vision.OpenCVTest;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -106,9 +107,9 @@ public class A4 extends LinearOpMode {
         motorArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER); // only set to run to pos later on
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
-        Pose2d starting_position = new Pose2d(56.8, -11.6, 0);
+        Pose2d starting_position = new Pose2d(56.8, -11.6, 2*Math.PI);
         Trajectory leftProp = drive.trajectoryBuilder(starting_position)
-                .splineToLinearHeading(new Pose2d(46, -21.4, Math.PI/2), 0,
+                .splineToLinearHeading(new Pose2d(46, -21.4, Math.PI/2), starting_position.getHeading(),
                         SampleMecanumDrive.getVelocityConstraint(
                                 DriveConstants.MAX_VEL,
                                 DriveConstants.MAX_ANG_VEL,
@@ -130,7 +131,7 @@ public class A4 extends LinearOpMode {
                 .build();
 
         Trajectory RightPropXPositioning = drive.trajectoryBuilder(starting_position)
-                .lineToLinearHeading(new Pose2d(36.7, starting_position.getY(), 0))
+                .lineToLinearHeading(new Pose2d(36.7, starting_position.getY(), starting_position.getHeading()))
                 .build();
         Trajectory rightProp = drive.trajectoryBuilder(RightPropXPositioning.end())
                 .strafeRight(3).build();
@@ -141,7 +142,7 @@ public class A4 extends LinearOpMode {
                 .build();
         Trajectory tuckAway = drive.trajectoryBuilder(rightBackboard.end())
                 .strafeRight(20).build();
-        initOpenCVRed();
+        initOpenCVBlue();
         while(opModeInInit()){
             teamPropPlacement = TeamPropPositionCalculator();
         }
@@ -154,16 +155,16 @@ public class A4 extends LinearOpMode {
             drive.followTrajectory(leftProp);
             servoPurpleDepositor.setPosition(0.7);
             sleep(1000);
-            drive.followTrajectory(leftDisengageStrafe);
-            drive.followTrajectory(leftBackboard);
+//            drive.followTrajectory(leftDisengageStrafe);
+//            drive.followTrajectory(leftBackboard);
         } else if(teamPropPlacement == 1){
             telemetry.addData("TeamPropPosition: ", "Center");
             telemetry.update();
             drive.followTrajectory(centerProp);
             servoPurpleDepositor.setPosition(0.7);
             sleep(1000);
-            drive.followTrajectory(centerDisengageStrafe);
-            drive.followTrajectory(centerBackboard);
+//            drive.followTrajectory(centerDisengageStrafe);
+//            drive.followTrajectory(centerBackboard);
         } else{
             telemetry.addData("TeamPropPosition: ", "Right");
             telemetry.update();
@@ -171,8 +172,8 @@ public class A4 extends LinearOpMode {
             drive.followTrajectory(rightProp);
             servoPurpleDepositor.setPosition(0.7);
             sleep(1000);
-            drive.followTrajectory(rightDisengageStrafe);
-            drive.followTrajectory(rightBackboard);
+//            drive.followTrajectory(rightDisengageStrafe);
+//            drive.followTraj  ectory(rightBackboard);
         }
 
         servoGripper.setPosition(gripperClosedPos);
@@ -211,18 +212,18 @@ public class A4 extends LinearOpMode {
         return degrees * -1;
     }
 
-    public class RedTeamPropDetectionPipeline extends OpenCvPipeline {
+    public class BlueTeamPropDetectionPipeline extends OpenCvPipeline {
 
         @Override
         public Mat processFrame(Mat input) {
             telemetry.addData("Entered function", "process Frame");
             // Preprocess the frame to detect yellow regions
-            Mat redMask = preprocessFrame(input);
+            Mat blueMask = preprocessFrame(input);
 
             // Find contours of the detected yellow regions
             List<MatOfPoint> contours = new ArrayList<>();
             Mat hierarchy = new Mat();
-            Imgproc.findContours(redMask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+            Imgproc.findContours(blueMask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
             // Find the largest blue contour (blob)
             MatOfPoint largestContour = findLargestContour(contours);
@@ -249,31 +250,21 @@ public class A4 extends LinearOpMode {
             Mat hsvFrame = new Mat();
             Imgproc.cvtColor(frame, hsvFrame, Imgproc.COLOR_RGB2HSV);
 
-            Scalar lowerRed1 = new Scalar(0, 100, 100);
-            Scalar upperRed1 = new Scalar(15, 255, 255);
-
-            Scalar lowerRed2 = new Scalar(160, 100, 100);
-            Scalar upperRed2 = new Scalar(180, 255, 255);
+            Scalar lowerBlue = new Scalar(80, 100, 100);
+            Scalar upperBlue = new Scalar(130, 255, 255);
 
 
-            Mat redMask1 = new Mat();
-            Mat redMask2 = new Mat();
-            Mat redMask = new Mat();
-
-            Core.inRange(hsvFrame, lowerRed1, upperRed1, redMask1);
-            Core.inRange(hsvFrame, lowerRed2, upperRed2, redMask2);
-//
-            Core.add(redMask1, redMask2, redMask);
-
+            Mat blueMask = new Mat();
+            Core.inRange(hsvFrame, lowerBlue, upperBlue, blueMask);
 
 //            telemetry.
 
             Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
 //            Tod: check if I can get rid of some of this (or just hide the computation in init loop)
-            Imgproc.morphologyEx(redMask, redMask, Imgproc.MORPH_OPEN, kernel);
-            Imgproc.morphologyEx(redMask, redMask, Imgproc.MORPH_CLOSE, kernel);
+            Imgproc.morphologyEx(blueMask, blueMask, Imgproc.MORPH_OPEN, kernel);
+            Imgproc.morphologyEx(blueMask, blueMask, Imgproc.MORPH_CLOSE, kernel);
 
-            return redMask;
+            return blueMask;
         }
 
         private MatOfPoint findLargestContour(List<MatOfPoint> contours) {
@@ -296,7 +287,7 @@ public class A4 extends LinearOpMode {
 
     }
 
-    public void initOpenCVRed() {
+    public void initOpenCVBlue() {
 
         // Create an instance of the camera
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
@@ -306,7 +297,7 @@ public class A4 extends LinearOpMode {
         controlHubCam = OpenCvCameraFactory.getInstance().createWebcam(
                 hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
 
-        controlHubCam.setPipeline(new A4.RedTeamPropDetectionPipeline());
+        controlHubCam.setPipeline(new A4.BlueTeamPropDetectionPipeline());
 
         controlHubCam.openCameraDevice();
         controlHubCam.startStreaming(CAMERA_WIDTH, CAMERA_HEIGHT, OpenCvCameraRotation.UPRIGHT);
