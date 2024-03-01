@@ -32,7 +32,7 @@ import org.openftc.easyopencv.OpenCvPipeline;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-@Autonomous(name="F2 (Red Team Far from Board)")
+@Autonomous(name="F2 (Red Team Far From Board)")
 public class F2 extends LinearOpMode {
 
     DcMotor motorFrontLeft, motorFrontRight, motorBackLeft, motorBackRight, motorIntake,
@@ -50,7 +50,6 @@ public class F2 extends LinearOpMode {
     final double
             gripperClosedPos = 1, gripperOpenedPos = 0.5, //0 to 1
             wristPickupPos = 0, wristScorePos = 1; //0 to 1
-    final int armPickupPos = 0, armScorePos = degreesToTicks(150); //0 to idk
     double wristServoTarget = 0;
     float proportionalArmPos = 0;
 
@@ -106,116 +105,118 @@ public class F2 extends LinearOpMode {
         motorArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER); // only set to run to pos later on
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
-        Pose2d starting_position = new Pose2d(-56.8, 35.6, Math.PI);
-        Trajectory rightProp = drive.trajectoryBuilder(starting_position)
-                .splineToLinearHeading(new Pose2d(-46, 45.4, 3*Math.PI/2), Math.PI,
-                        SampleMecanumDrive.getVelocityConstraint(
-                                DriveConstants.MAX_VEL,
-                                DriveConstants.MAX_ANG_VEL,
-                                DriveConstants.TRACK_WIDTH),
-                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL * 0.5))
+        Pose2d starting_position = new Pose2d(-63, 36, Math.PI);
+        // Left Pixel Position Autonomous
+        Trajectory leftClearWall = drive.trajectoryBuilder(starting_position)
+                .back(15)
                 .build();
-        Trajectory rightDisengageStrafe = drive.trajectoryBuilder(rightProp.end())
-                .strafeLeft(10).build();
-        Trajectory rightBackboard = drive.trajectoryBuilder(rightDisengageStrafe.end())
-                .splineToLinearHeading(new Pose2d(-36.2, -46, Math.PI/2), rightDisengageStrafe.end().getHeading())
+        Trajectory leftProp = drive.trajectoryBuilder(leftClearWall.end())
+                .splineToLinearHeading(new Pose2d(-24, 46, Math.toRadians(90)), leftClearWall.end().getHeading())
                 .build();
-        Trajectory centerProp = drive.trajectoryBuilder(starting_position)
-                .splineToLinearHeading(new Pose2d(-26.3, 48.1, 2*Math.PI), starting_position.getHeading())
+        Trajectory leftDisengage = drive.trajectoryBuilder(leftProp.end())
+                .strafeRight(12).build();
+        Trajectory leftCenterish = drive.trajectoryBuilder(leftDisengage.end())
+                .splineToConstantHeading(new Vector2d(-12, 45), leftDisengage.end().getHeading(),
+                        SampleMecanumDrive.getVelocityConstraint(DriveConstants.MAX_VEL*0.5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL*0.5))
                 .build();
-        Trajectory centerDisengageStrafe = drive.trajectoryBuilder(centerProp.end())
-                .strafeLeft(10).build();
-        Trajectory centerBackboard = drive.trajectoryBuilder(centerDisengageStrafe.end())
-                .splineToLinearHeading(new Pose2d(36.2, -46, Math.PI/2), centerDisengageStrafe.end().getHeading())
+        Trajectory leftBackdrop = drive.trajectoryBuilder(leftCenterish.end())
+                .back(95, SampleMecanumDrive.getVelocityConstraint(DriveConstants.MAX_VEL*0.5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL*0.5))
+//                .splineToConstantHeading(new Vector2d(12,-50),leftCenterish.end().getHeading(),
+//                        SampleMecanumDrive.getVelocityConstraint(DriveConstants.MAX_VEL*0.5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+//                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL*0.5))
                 .build();
 
-        Trajectory leftPropXPositioning = drive.trajectoryBuilder(starting_position)
-                .lineToLinearHeading(new Pose2d(-36.7, starting_position.getY(), 2*Math.PI))
+        //Center Pixel Position Autonomous
+        Trajectory centerProp = drive.trajectoryBuilder(starting_position, true)
+                .splineTo(new Vector2d(-22, 42), Math.toRadians(360))
                 .build();
-        Trajectory leftProp = drive.trajectoryBuilder(leftPropXPositioning.end())
-                .strafeRight(3).build();
-        Trajectory leftDisengageStrafe = drive.trajectoryBuilder(leftProp.end())
-                .strafeLeft(10).build();
-        Trajectory leftBackboard = drive.trajectoryBuilder(leftDisengageStrafe.end())
-                .splineToLinearHeading(new Pose2d(36.2, -46, Math.PI/2), leftDisengageStrafe.end().getHeading())
+        Trajectory centerDisengage = drive.trajectoryBuilder(centerProp.end())
+                .strafeRight(12).build();
+        Trajectory centerCenterish = drive.trajectoryBuilder(centerDisengage.end())
+                .splineToLinearHeading(new Pose2d(-12, 45, Math.toRadians(90)), centerDisengage.end().getHeading(),
+                        SampleMecanumDrive.getVelocityConstraint(DriveConstants.MAX_VEL*0.5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL*0.5))
                 .build();
-        Trajectory tuckAway = drive.trajectoryBuilder(rightBackboard.end())
-                .strafeRight(20).build();
+        Trajectory centerBackdrop = drive.trajectoryBuilder(centerCenterish.end())
+                .back(95, SampleMecanumDrive.getVelocityConstraint(DriveConstants.MAX_VEL*0.5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL*0.5))
+//                .splineToConstantHeading(new Vector2d(12,-50),leftCenterish.end().getHeading(),
+//                        SampleMecanumDrive.getVelocityConstraint(DriveConstants.MAX_VEL*0.5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+//                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL*0.5))
+                .build();
+
+        //Right Pixel Position Autonomous
+        Trajectory rightClearWall = drive.trajectoryBuilder(starting_position)
+                .splineToConstantHeading(new Vector2d(-48, 44), starting_position.getHeading())
+                .build();
+        Trajectory rightProp = drive.trajectoryBuilder(rightClearWall.end()) //TODO: Maybe change this to drop prop closer to tape
+                .splineToLinearHeading(new Pose2d(-30-(6/Math.sqrt(2)), 24+10/Math.sqrt(2), Math.toRadians(225)), leftClearWall.end().getHeading()
+                        , SampleMecanumDrive.getVelocityConstraint(DriveConstants.MAX_VEL*0.5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL*0.5))
+                .build();
+        Trajectory rightDisengage = drive.trajectoryBuilder(rightProp.end())
+                .strafeRight(12).build();
+        Trajectory rightCenterish = drive.trajectoryBuilder(rightDisengage.end())
+                .splineToLinearHeading(new Pose2d(-12, 45, Math.toRadians(90)), centerDisengage.end().getHeading(),
+                        SampleMecanumDrive.getVelocityConstraint(DriveConstants.MAX_VEL*0.5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL*0.5))
+                .build();
+        Trajectory rightBackdrop = drive.trajectoryBuilder(rightCenterish.end())
+                .back(95, SampleMecanumDrive.getVelocityConstraint(DriveConstants.MAX_VEL*0.5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL*0.5))
+//                .splineToConstantHeading(new Vector2d(12,-50),leftCenterish.end().getHeading(),
+//                        SampleMecanumDrive.getVelocityConstraint(DriveConstants.MAX_VEL*0.5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+//                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL*0.5))
+                .build();
+
+
         initOpenCVRed();
-        while(opModeInInit()){
+        servoPurpleDepositor.setPosition(0);
+        while (opModeInInit()) {
             teamPropPlacement = TeamPropPositionCalculator();
         }
         waitForStart();
         servoPurpleDepositor.setPosition(0);
         drive.setPoseEstimate(starting_position);
-        if(teamPropPlacement == 0){ // I messed up Left and Right somewhere
+        if (teamPropPlacement == 0) {
             telemetry.addData("TeamPropPosition: ", "Left");
             telemetry.update();
-            drive.followTrajectory(leftPropXPositioning);
+            drive.followTrajectory(leftClearWall);
             drive.followTrajectory(leftProp);
             servoPurpleDepositor.setPosition(0.7);
             sleep(1000);
-//            drive.followTrajectory(leftDisengageStrafe);
-//            drive.followTrajectory(leftBackboard);
-        } else if(teamPropPlacement == 1){
+            drive.followTrajectory(leftDisengage);
+            drive.followTrajectory(leftCenterish);
+            drive.followTrajectory(leftBackdrop);
+        } else if (teamPropPlacement == 1) {
             telemetry.addData("TeamPropPosition: ", "Center");
             telemetry.update();
             drive.followTrajectory(centerProp);
             servoPurpleDepositor.setPosition(0.7);
             sleep(1000);
-//            drive.followTrajectory(centerDisengageStrafe);
-//            drive.followTrajectory(centerBackboard);
-        } else{
+            drive.followTrajectory(centerDisengage);
+            drive.followTrajectory(centerCenterish);
+            drive.followTrajectory(centerBackdrop);
+        } else {
             telemetry.addData("TeamPropPosition: ", "Right");
             telemetry.update();
+            drive.followTrajectory(rightClearWall);
             drive.followTrajectory(rightProp);
             servoPurpleDepositor.setPosition(0.7);
             sleep(1000);
-//            drive.followTrajectory(rightDisengageStrafe);
-//            drive.followTrajectory(rightBackboard);
+            drive.followTrajectory(rightDisengage);
+            drive.followTrajectory(rightCenterish);
+            drive.followTrajectory(rightBackdrop);
         }
-
-//        servoGripper.setPosition(gripperClosedPos);
-//        motorArm.setTargetPosition(armScorePos+degreesToTicks(15));
-//        motorArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//        motorArm.setPower(0.25);
-
-        while(opModeIsActive()){
-            proportionalArmPos = (float) motorArm.getCurrentPosition() / (float) armScorePos; //0-1; where 0 is pickup, 1 is score.
-            //wristServoTarget is = 0 for straight down, 1 for straight up; 0.5 for straight forward.
-            if(proportionalArmPos <= 0.15){
-                int constant = 10;
-                wristServoTarget = Math.pow(constant*(0.15 - proportionalArmPos), 1.75)/constant; //quadratic, ends at ~.15
-            }else if(proportionalArmPos <= 0.25){
-                wristServoTarget = 0;
-            } else if(proportionalArmPos <= 1.00) {
-                wristServoTarget = (proportionalArmPos - 0.25)/0.75 * wristScorePos; // subtraction and division eliminate a potential jump discontinuity
-            } else if(proportionalArmPos > 1.00){
-                wristServoTarget = wristScorePos - 1*(proportionalArmPos - 1);
-            }
-            servoWrist.setPosition(wristServoTarget);
-            if(motorArm.getCurrentPosition() > armScorePos+degreesToTicks(5)){
-//                servoGripper.setPosition(gripperOpenedPos);
-                break;
-            }
-        }
-        drive.followTrajectory(tuckAway);
-    }
-
-    public int degreesToTicks(float degrees){
-        int ticks = (int) Math.round(degrees*6.2222);
-        return ticks * -1;
-    }
-    public double ticksToDegrees(int ticks){
-        double degrees = (double) ticks/6.2222;
-        return degrees * -1;
     }
 
     public class RedTeamPropDetectionPipeline extends OpenCvPipeline {
 
         @Override
         public Mat processFrame(Mat input) {
-            telemetry.addData("Entered function", "process Frame");
+//            telemetry.addData("Entered function", "process Frame");
             // Preprocess the frame to detect yellow regions
             Mat redMask = preprocessFrame(input);
 
@@ -245,7 +246,7 @@ public class F2 extends LinearOpMode {
             return input;
         }
         private Mat preprocessFrame(Mat frame) {
-            telemetry.addData("Entered function", "preprocess frame");
+//            telemetry.addData("Entered function", "preprocess frame");
             Mat hsvFrame = new Mat();
             Imgproc.cvtColor(frame, hsvFrame, Imgproc.COLOR_RGB2HSV);
 
@@ -278,7 +279,7 @@ public class F2 extends LinearOpMode {
 
         private MatOfPoint findLargestContour(List<MatOfPoint> contours) {
             double maxArea = 0;
-            telemetry.addData("Entered function", "finding largest contour");
+//            telemetry.addData("Entered function", "finding largest contour");
             MatOfPoint largestContour = null;
 
             for (MatOfPoint contour : contours) {
@@ -289,7 +290,7 @@ public class F2 extends LinearOpMode {
                 }
             }
             if(largestContour != null) {
-                telemetry.addData("Largest Contour: ", Imgproc.contourArea(largestContour));
+//                telemetry.addData("Largest Contour: ", Imgproc.contourArea(largestContour));
             }
             return largestContour;
         }

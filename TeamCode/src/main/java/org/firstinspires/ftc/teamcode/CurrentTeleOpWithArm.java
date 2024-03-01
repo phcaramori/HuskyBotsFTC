@@ -50,7 +50,7 @@ public class CurrentTeleOpWithArm extends LinearOpMode {
     final double
             gripperClosedPos = 1, gripperOpenedPos = 0.5, //0 to 1
             wristPickupPos = 0, wristScorePos = 1; //0 to 1
-    final int armPickupPos = 0, armScorePos = degreesToTicks(165), armHomePos = degreesToTicks(45); //0 to idk
+    final int armPickupPos = 0, armScorePos = degreesToTicks(230), armHomePos = degreesToTicks(45); //0 to idk
     double manualArmPower = 0.0;
     boolean armManualMode = false, pixel_grab = true;
 
